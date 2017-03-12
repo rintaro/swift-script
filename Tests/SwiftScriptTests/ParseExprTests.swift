@@ -68,14 +68,12 @@ class ParseExprTests: XCTestCase {
             expr, "foo!.bar"))
     }
     
-    func testExprParen() {
-        XCTAssertTrue(parseSuccess(
-            exprParenthesized, "(x)"))
-        XCTAssertTrue(parseSuccess(
-            exprParenthesized, "(foo.bar())"))
-    }
     
     func testExprTuple() {
+        XCTAssertTrue(parseSuccess(
+            exprTuple, "(x)"))
+        XCTAssertTrue(parseSuccess(
+            exprTuple, "(foo.bar())"))
         XCTAssertTrue(parseSuccess(
             exprTuple, "(x, 1)"))
         XCTAssertTrue(parseSuccess(

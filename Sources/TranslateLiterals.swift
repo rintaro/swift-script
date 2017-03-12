@@ -1,6 +1,6 @@
 extension IntegerLiteral {
     public func javaScript(with indentLevel: Int) -> String {
-        return  "\(value)"
+        return  digits
     }
 }
 
@@ -30,7 +30,7 @@ extension NilLiteral {
 
 extension FloatingPointLiteral {
     public func javaScript(with indentLevel: Int) -> String {
-        return  "\(value)"
+        return  digits
     }
 }
 

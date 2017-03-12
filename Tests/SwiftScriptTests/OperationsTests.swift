@@ -4,7 +4,7 @@ import XCTest
 class OperationsTests: XCTestCase {
     func testBinaryOperation() {
         XCTAssertEqual(BinaryOperation(
-            leftOperand: IntegerLiteral(value: 2),
+            leftOperand: IntegerLiteral(digits: "2"),
             operatorSymbol: "+",
             rightOperand: IntegerLiteral(value: 3)
         ).javaScript(with: 0), "2 + 3")
@@ -37,7 +37,7 @@ class OperationsTests: XCTestCase {
     func testTernaryOperation() {
         XCTAssertEqual(TernaryOperation(
             firstOperand: IdentifierExpression(identifier: "foo"),
-            secondOperand: IntegerLiteral(value: 2),
+            secondOperand: IntegerLiteral(digits: "2"),
             thirdOperand: IntegerLiteral(value: 3)
         ).javaScript(with: 0), "foo ? 2 : 3")
     }

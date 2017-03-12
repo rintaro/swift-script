@@ -24,10 +24,10 @@ let declConstant = _declConstant()
 func _declConstant() -> SwiftParser<ConstantDeclaration> {
     return { isStatic in {  name in { ty in { initializer in
         ConstantDeclaration(isStatic: isStatic != nil, name: name, type: ty, expression: initializer) }}}}
-        <^> zeroOrOne(kw_static <* OWS)
-        <*> (kw_let *> OWS *> identifier)
-        <*> zeroOrOne(OWS *> colon *> OWS *> type)
-        <*> zeroOrOne(OWS *> equal *> OWS *> expr)
+        <^> zeroOrOne(kw_static)
+        <*> (kw_let *> identifier)
+        <*> zeroOrOne(colon *> type)
+        <*> zeroOrOne(equal *> expr)
 }
 
 
@@ -35,10 +35,10 @@ let declVariable = _declVariable()
 func _declVariable() -> SwiftParser<VariableDeclaration> {
     return { isStatic in {  name in { ty in { initializer in
         VariableDeclaration(isStatic: isStatic != nil, name: name, type: ty, expression: initializer) }}}}
-        <^> zeroOrOne(kw_static <* OWS)
-        <*> (kw_var *> OWS *> identifier)
-        <*> zeroOrOne(OWS *> colon *> OWS *> type)
-        <*> zeroOrOne(OWS *> equal *> OWS *> expr)
+        <^> zeroOrOne(kw_static)
+        <*> (kw_var *> identifier)
+        <*> zeroOrOne(colon *> type)
+        <*> zeroOrOne(equal *> expr)
 }
 
 func _declTypeAlias() -> SwiftParser<TypeAliasDeclaration> {
@@ -47,14 +47,14 @@ func _declTypeAlias() -> SwiftParser<TypeAliasDeclaration> {
 
 let declParam = _declParam()
 func _declParam() -> SwiftParser<Parameter> {
-    let label = (identifier <|> kw__)
+    let label = (identifier <|> (kw__ <&> { _ in  "" }))
     return { apiName in { paramName in { ty in { isVariadic in { defaultValue in
         Parameter(externalParameterName: apiName, localParameterName: paramName, type: ty, defaultArgument: defaultValue) }}}}}
-        <^> zeroOrOne(label <* WS)
-        <*> (label <* OWS <* colon)
-        <*> (OWS *> type)
+        <^> zeroOrOne(label <* lookAhead(label))
+        <*> label
+        <*> (colon *> type)
         <*> zeroOrOne(ellipsis)
-        <*> zeroOrOne(OWS *> equal *> OWS *> expr)
+        <*> zeroOrOne(equal *> expr)
 }
 
 
@@ -76,18 +76,18 @@ fileprivate struct GenericRequirement {
 fileprivate let declGenericParams = _declGenericParams()
 fileprivate func _declGenericParams() -> SwiftParser<[GenericParam]> {
     let param: SwiftParser<GenericParam> = { ident in { ty in GenericParam(param: ident, requirement: ty) }}
-        <^> identifier <*> zeroOrOne(OWS *> colon *> type)
+        <^> identifier <*> zeroOrOne(colon *> type)
     return list(l_angle, param, comma, r_angle)
 }
 
 
 fileprivate let declGenericWhere = _declGenericWhere()
 fileprivate func _declGenericWhere() -> SwiftParser<[GenericRequirement]> {
-    let inheritR: SwiftParser<(GenericRequirement.Kind, Type_)> = (OWS *> colon *> OWS  *> type) <&> { ty in (.inherit, ty) }
+    let inheritR: SwiftParser<(GenericRequirement.Kind, Type_)> = (colon *> type) <&> { ty in (.inherit, ty) }
     let equalR: SwiftParser<(GenericRequirement.Kind, Type_)> = (oper_infix("==") *> type) <&> { ty in (.equals, ty) }
     let requirement: SwiftParser<GenericRequirement> = { ident in { req in GenericRequirement(param: ident, kind: req.0, requirement: req.1) }}
         <^> identifier <*> (inheritR <|> equalR)
-    return (kw_where *> OWS *> sepBy1(requirement, OWS *> comma <* OWS))
+    return (kw_where *> sepBy1(requirement, comma))
 }
 
 let declFunction = _declFunction()
@@ -101,8 +101,8 @@ func _declFunction() -> SwiftParser<FunctionDeclaration> {
     let signature: SwiftParser<FuncSignature> = { params in { hasThrows in { retType in
         FuncSignature(params: params, hasThrows: hasThrows != nil, retType: retType) }}}
         <^> list(l_paren, declParam, comma, r_paren)
-        <*> zeroOrOne(OWS *> kw_throws)
-        <*> zeroOrOne(OWS *> arrow *> OWS *> type)
+        <*> zeroOrOne(kw_throws)
+        <*> zeroOrOne(arrow *> type)
     
     return  { isStatic in { name in { generics in { signature in { whereClause in { body in
         FunctionDeclaration(
@@ -112,17 +112,17 @@ func _declFunction() -> SwiftParser<FunctionDeclaration> {
             result: signature.retType,
             hasThrows: signature.hasThrows,
             body: body) }}}}}}
-        <^> zeroOrOne(kw_static <* OWS)
-        <*> (kw_func *> WS *> identifier)
-        <*> zeroOrOne(OWS *> declGenericParams)
-        <*> (OWS *> signature)
-        <*> zeroOrOne(OWS *> declGenericWhere)
-        <*> (OWS *> stmtBrace)
+        <^> zeroOrOne(kw_static)
+        <*> (kw_func *> identifier)
+        <*> zeroOrOne(declGenericParams)
+        <*> signature
+        <*> zeroOrOne(declGenericWhere)
+        <*> stmtBrace
 }
 
 fileprivate let declMembers = _declMembers();
 fileprivate func _declMembers() -> SwiftParser<[Declaration]> {
-    return l_brace *> OWS *> sepEndBy(decl, stmtSep) <* OWS <* r_brace
+    return l_brace *> sepEndBy(decl, stmtSep) <* r_brace
 }
 
 func _declEnum() -> SwiftParser<EnumDeclaration­> {
@@ -137,11 +137,11 @@ let declClass = _declClass()
 func _declClass() -> SwiftParser<ClassDeclaration­> {
     return { name in { generics in { inherits in { whereClause in { members in
         ClassDeclaration­(name: name, superTypes: inherits ?? [], members: members) }}}}}
-        <^> (kw_class *> WS *> identifier)
-        <*> zeroOrOne(OWS *> declGenericParams)
-        <*> zeroOrOne(OWS *> colon *> OWS *> sepBy1(type, OWS *> comma <* OWS))
-        <*> zeroOrOne(OWS *> declGenericWhere)
-        <*> (OWS *> declMembers)
+        <^> (kw_class *> identifier)
+        <*> zeroOrOne(declGenericParams)
+        <*> zeroOrOne(colon *> sepBy1(type, comma))
+        <*> zeroOrOne(declGenericWhere)
+        <*> declMembers
 }
 
 func _declProtocol() -> SwiftParser<ProtocolDeclaration­> {
@@ -159,16 +159,16 @@ func _declInitializer() -> SwiftParser<InitializerDeclaration­> {
     
     let signature = { generics in { params in { hasThrows in { whereClause in
         Signature(generics: generics, params: params, hasThrows: hasThrows != nil, whereClause: whereClause) }}}}
-        <^> zeroOrOne(OWS *> declGenericParams)
-        <*> (OWS *> list(l_paren, declParam, comma, r_paren))
-        <*> zeroOrOne(OWS *> kw_throws)
-        <*> zeroOrOne(OWS *> declGenericWhere)
+        <^> zeroOrOne(declGenericParams)
+        <*> list(l_paren, declParam, comma, r_paren)
+        <*> zeroOrOne(kw_throws)
+        <*> zeroOrOne(declGenericWhere)
     
     return  { isFailable in { signature in { body in
         InitializerDeclaration­(arguments: signature.params, isFailable: isFailable != nil, hasThrows: signature.hasThrows, body: body) }}}
-        <^> (kw_init *> zeroOrOne(char("?")))
+        <^> (kw_init *> zeroOrOne(tok(.question_postfix)))
         <*> signature
-        <*> (OWS *> stmtBrace)
+        <*> stmtBrace
 }
 
 func _declDeinitializer() -> SwiftParser<DeinitializerDeclaration­> {

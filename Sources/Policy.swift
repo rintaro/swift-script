@@ -1,8 +1,8 @@
 
 import TryParsec
 
-// Parser input type
-typealias SwiftSource = String.UnicodeScalarView
+typealias SrcPointer = UnsafePointer<UInt8>
+
 // Just for onvenience
-typealias SwiftParser<Out> = TryParsec.Parser<SwiftSource, Out>
+typealias SwiftParser<Out> = TryParsec.Parser<Lexer, Out>
 

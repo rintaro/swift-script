@@ -23,7 +23,7 @@ let typeArray = _typeArray()
 func _typeArray() -> SwiftParser<ArrayType> {
     return { ty in
         ArrayType(type: ty) }
-        <^> l_square *> OWS *> type <* OWS <* r_square
+        <^> l_square *> type <* r_square
 }
 
 
@@ -31,8 +31,8 @@ let typeDictionary = _typeDictionary()
 func _typeDictionary() -> SwiftParser<DictionaryType> {
     return { key in { value in
         DictionaryType(keyType: key, valueType: value) }}
-        <^> (l_square)
-        *> (OWS *> type)
-        <*> (OWS *> colon *> type)
-        <* (OWS *> r_square)
+        <^> l_square
+        *> type
+        <*> colon *> type
+        <* r_square
 }

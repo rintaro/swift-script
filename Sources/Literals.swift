@@ -11,11 +11,15 @@ public struct DictionaryLiteral: Literal {
 }
 
 public struct IntegerLiteral: Literal {
-    public var value: Int
+    public var digits: String
+    public init(digits: String) { self.digits = digits }
+    public init(value: Int) { self.digits = "\(value)" }
 }
 
 public struct FloatingPointLiteral: Literal {
-    public var value: Float
+    public var digits: String
+    public init(digits: String) { self.digits = digits }
+    public init(value: Double) { self.digits = "\(value)" }
 }
 
 public struct StringLiteral: Literal {

@@ -15,20 +15,28 @@ func _exprBooleanLiteral() -> SwiftParser<BooleanLiteral> {
         <|> ({ _ in BooleanLiteral(value: true) } <^> kw_true)
 }
 
-
 let exprStringLiteral = _exprStringLiteral()
 func _exprStringLiteral() -> SwiftParser<StringLiteral> {
-    return { value in StringLiteral(value: value) } <^> stringLiteral
+    return { tok in
+        let str = String(tok.text.unicodeScalars.dropFirst().dropLast())
+        return StringLiteral(value: str) }
+        <^> tok(.string_literal)
 }
 
 let exprIntegerLiteral = _exprIntegerLiteral()
 func _exprIntegerLiteral() -> SwiftParser<IntegerLiteral> {
-    return { value in IntegerLiteral(value: value) } <^> integerLiteral
+    return { tok in
+        let digits = stringRemovingUnderscore(ptr: tok.start, length: tok.length)
+        return IntegerLiteral(digits: digits) }
+        <^> tok(.integer_literal)
 }
 
 let exprFloatLiteral = _exprFloatLiteral()
 func _exprFloatLiteral() -> SwiftParser<FloatingPointLiteral> {
-    return { value in FloatingPointLiteral(value: value) } <^> floatLiteral
+    return { tok in
+        let digits = stringRemovingUnderscore(ptr: tok.start, length: tok.length)
+        return FloatingPointLiteral(digits: digits) }
+        <^> tok(.float_literal)
 }
 
 let exprArrayLiteral = _exprArrayLiteral()
@@ -40,9 +48,9 @@ func _exprArrayLiteral() -> SwiftParser<ArrayLiteral> {
 let exprDictionaryLiteral = _exprDictionaryLiteral()
 func _exprDictionaryLiteral() -> SwiftParser<DictionaryLiteral> {
     let item = { key in { val in (key, val) }}
-        <^> (expr <* OWS <* colon) <*> (OWS *> expr)
-    let items = sepBy1(item, OWS *> comma <* OWS)
+        <^> expr <* colon <*> expr
+    let items = sepBy1(item, comma)
         <|> (colon <&> { _ in [/* empty */] })
     return { items in DictionaryLiteral(value: items) }
-        <^> l_square *> OWS *> items <* OWS <* r_square
+        <^> l_square *> items <* r_square
 }
